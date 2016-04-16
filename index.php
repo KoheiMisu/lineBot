@@ -1,11 +1,3 @@
-/*
- * 環境変数として以下を使用しています
- * - LINE_CHANNEL_ID
- * - LINE_CHANNEL_SECRET
- * - LINE_CHANNEL_MID
- * - FIXIE_URL
- * - APP_NAME
- */
 <?php
 
 $line = [
