@@ -4,7 +4,7 @@ $line = [
     'channelId' => '1461774589',
     'channelSecret' => '81f0768fd4100d25d1ca39e8eb6fa834',
     'channelMid' => 'u71fa2f99caf33552f6c33e09683f4049',
-    'FixieUrl' => 'https://line-cooking-bot.herokuapp.com:443',
+    'FixieUrl' => 'http://fixie:V2608KBbfSyxAGC@velodrome.usefixie.com:80',
     'AppName' => 'cooking'
 ];
 
