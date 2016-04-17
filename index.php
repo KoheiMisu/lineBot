@@ -5,6 +5,15 @@ use Symfony\Component\HttpFoundation\Request;
 
 $app = new Silex\Application();
 
+$line = [
+    'channelId' => '1461774589',
+    'channelSecret' => '81f0768fd4100d25d1ca39e8eb6fa834',
+    'channelMid' => 'u71fa2f99caf33552f6c33e09683f4049',
+    'FixieUrl' => 'http://fixie:V2608KBbfSyxAGC@velodrome.usefixie.com:80',
+    'AppName' => 'cooking'
+];
+
+
 $app->post('/callback', function (Request $request) use ($app) {
     $client = new GuzzleHttp\Client();
 
@@ -26,12 +35,12 @@ $app->post('/callback', function (Request $request) use ($app) {
             ]),
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF-8',
-                'X-Line-ChannelID' => getenv('LINE_CHANNEL_ID'),
-                'X-Line-ChannelSecret' => getenv('LINE_CHANNEL_SECRET'),
-                'X-Line-Trusted-User-With-ACL' => getenv('LINE_CHANNEL_MID'),
+                'X-Line-ChannelID' => $line['channelId'],
+                'X-Line-ChannelSecret' => $line['channelSecret'],
+                'X-Line-Trusted-User-With-ACL' => $line['channelMid'],
             ],
             'proxy' => [
-                'https' => getenv('FIXIE_URL'),
+                'https' => $line['FixieUrl'],
             ],
         ];
 
