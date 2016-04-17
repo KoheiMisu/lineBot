@@ -1,61 +1,66 @@
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
-
-use Symfony\Component\HttpFoundation\Request;
-
-$app = new Silex\Application();
-
-$line = [
-    'channelId' => '1461774589',
-    'channelSecret' => '81f0768fd4100d25d1ca39e8eb6fa834',
-    'channelMid' => 'u71fa2f99caf33552f6c33e09683f4049',
-    'FixieUrl' => 'http://fixie:V2608KBbfSyxAGC@velodrome.usefixie.com:80',
-    'AppName' => 'cooking'
-];
-
-error_log("START: PHP");
-
-$app->post('/callback', function (Request $request) use ($app) {
-
-    error_log("START: Callback");
-
-    $client = new GuzzleHttp\Client();
-
-    $body = json_decode($request->getContent(), true);
-    foreach ($body['result'] as $msg) {
-        if (!preg_match('/(ぬるぽ|ヌルポ|ﾇﾙﾎﾟ|nullpo)/i', $msg['content']['text'])) {
-            continue;
-        }
-
-        $resContent = $msg['content'];
-        $resContent['text'] = 'ｶﾞｯ';
-
-        $requestOptions = [
-            'body' => json_encode([
-                'to' => [$msg['content']['from']],
-                'toChannel' => 1383378250, # Fixed value
-                'eventType' => '138311608800106203', # Fixed value
-                'content' => $resContent,
-            ]),
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF-8',
-                'X-Line-ChannelID' => $line['channelId'],
-                'X-Line-ChannelSecret' => $line['channelSecret'],
-                'X-Line-Trusted-User-With-ACL' => $line['channelMid'],
-            ],
-            'proxy' => [
-                'https' => $line['FixieUrl'],
-            ],
-        ];
-
-        try {
-            $client->request('post', 'https://trialbot-api.line.me/v1/events', $requestOptions);
-        } catch (Exception $e) {
-            error_log($e->getMessage());
-        }
-    }
-
-    return 'OK';
-});
-
-$app->run();
+error_log("callback start.");
+// アカウント情報設定
+$channel_id = getenv('LINE_CHANNEL_ID');
+$channel_secret = getenv('LINE_CHANNEL_SECRET');
+$mid = getenv('LINE_CHANNEL_MID');
+$proxy = getenv('FIXIE_URL');
+// メッセージ受信
+$json_string = file_get_contents('php://input');
+$json_object = json_decode($json_string);
+$content = $json_object->result{0}->content;
+$text = $content->text;
+$from = $content->from;
+$message_id = $content->id;
+$content_type = $content->contentType;
+// メッセージコンテンツ生成
+$sticker_content = <<< EOM
+        "contentType":8,
+                "contentMetadata":{
+                              "STKID":"100",
+                                        "STKPKGID":"1",
+                                                  "STKVER":"100"
+                                                          }
+                                                          EOM;
+                                                          // 受信メッセージに応じて返すメッセージを変更
+                                                          $event_type = "138311608800106203";
+                                                          if ($content_type != 1) {
+                                                                  $text = "テキスト以外";
+                                                          }
+                                                          $content = <<< EOM
+                                                                  "contentType":1,
+                                                                          "text":"{$text}"
+                                                                          EOM;
+                                                                          $post = <<< EOM
+                                                                          {
+                                                                                  "to":["{$from}"],
+                                                                                      "toChannel":1383378250,
+                                                                                          "eventType":"{$event_type}",
+                                                                                              "content":{
+                                                                                                          "toType":1,
+                                                                                                                  {$content}
+                                                                                                                      }
+                                                                          }
+                                                                          EOM;
+                                                                          api_post_request("/v1/events", $post);
+                                                                          error_log("callback end.");
+                                                                          function api_post_request($path, $post) {
+                                                                                  $url = "https://trialbot-api.line.me{$path}";
+                                                                                      $headers = array(
+                                                                                              "Content-Type: application/json",
+                                                                                                      "X-Line-ChannelID: {$GLOBALS['channel_id']}",
+                                                                                                              "X-Line-ChannelSecret: {$GLOBALS['channel_secret']}",
+                                                                                                                      "X-Line-Trusted-User-With-ACL: {$GLOBALS['mid']}"
+                                                                                                                          );
+                                                                                          $curl = curl_init($url);
+                                                                                              curl_setopt($curl, CURLOPT_POST, true);
+                                                                                                  curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+                                                                                                      curl_setopt($curl, CURLOPT_POSTFIELDS, $post);
+                                                                                                          curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                                                                                                              //プロキシ経由フラグ
+                                                                                                                  curl_setopt($curl, CURLOPT_HTTPPROXYTUNNEL, 1);
+                                                                                                                      //プロキシアドレス設定（プロキシのアドレス:ポート名）
+                                                                                                                          curl_setopt($curl, CURLOPT_PROXY, $GLOBALS['proxy']);
+                                                                                                                              $output = curl_exec($curl);
+                                                                                                                                  error_log($output);
+                                                                          }
